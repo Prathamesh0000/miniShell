@@ -13,6 +13,7 @@
 #define REPL_ASYNC "&"
 #define REPL_EXIT "exit"
 
+bool TESTING_MODE = true;
 
 
 /*
@@ -53,7 +54,7 @@ void repl(void) {
             char * seperatedInput[REPL_MAX_TOKENS] = {
                 NULL
             };
-            int inputTokenLength = parseInput(replInput, seperatedInput, " ");
+            int inputTokenLength = parseInput(replInput, seperatedInput, " \n");
 
             // Check special command
 
@@ -63,7 +64,8 @@ void repl(void) {
                 exit(0);
             } else if (strncmp(seperatedInput[inputTokenLength - 1], REPL_ASYNC, 1) == 0) {
                 async = true;
-                printf("Async Mode On");
+                seperatedInput[inputTokenLength - 1] = NULL;
+                printf("Async Mode On \n");
             }
 
             // #Execute
@@ -72,8 +74,8 @@ void repl(void) {
             // #Clean
 
 
-            //flush the input buffer            
-            // while(getchar() != '\n');
+            // flush the input buffer            
+            while(getchar() != '\n');
 
         }
 
@@ -89,6 +91,8 @@ int parseInput(char replInput[], char * arrayToPut[], char delimiter[]) {
     while (arrayToPut[lengthOfTokens] != NULL) {
         arrayToPut[++lengthOfTokens] = strtok(NULL, delimiter);
     }
+
+    arrayToPut[lengthOfTokens + 1] = (char * ) NULL;
     return lengthOfTokens;
 }
 
@@ -109,27 +113,33 @@ __pid_t replExec(char * replParsedInput[], bool async) {
         // Use execv
         printf("C:Child working\n");
 
-        int exec_return_value = execlp("/bin/ls", "ls", "-l", (char * ) NULL);
+        char * execution[] = {"ls", "-l", (char * ) NULL};
+
+        int exec_return_value = execvp(replParsedInput[0], replParsedInput);
         if (exec_return_value == -1) {
             perror("Error is executing command");
             exit(EXIT_FAILURE);
-        }
+        } 
 
     }
     if (child_pid > 0) {
         printf("P:Child process pid is : %d \n", child_pid);
 
         if (!async) {
-            printf("P:Async turned OFF waiting for child");
+            printf("P:Async turned OFF waiting for child\n");
 
             int wait_status;
-            __pid_t terminated_child_pid = wait( & wait_status);
+            __pid_t terminated_child_pid = waitpid( child_pid, &wait_status, 0);
             if (terminated_child_pid == -1) {
                 perror("wait");
                 exit(EXIT_FAILURE);
             }
         }
-        printf("P: my child %d terminates.\n", child_pid);
+        // printf("P: my child %d terminates.\n", child_pid);
     }
     return child_pid;
 }
+
+
+// sh test.sh 5 1 &
+// sh test.sh 5 2 &
