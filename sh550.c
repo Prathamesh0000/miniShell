@@ -24,6 +24,7 @@ struct processMetaData
    __pid_t processID;
    int execId;
    char * execStatus;
+   bool checked;
 };
 
 struct processMetaData execHistory[100];
@@ -51,16 +52,21 @@ int parseInput(char replInput[], char * arrayToPut[], char delimiter[]) {
 
 
 
-char * getStatus( __pid_t pid) {
+char * getStatus(struct processMetaData meta) {
     int processStatus;
-    __pid_t return_pid = waitpid(pid, &processStatus, WNOHANG); // Only checks status of pid
-    if( return_pid == -1) {
-        perror("get Status of pid");
-        return "e";
-    } else if ( return_pid == 0) {   
-        return "r";
-    } else if ( return_pid == pid) {
-        return "f";
+    // in finished state waitpid will return error as there will be no process in execution. Thus only check when process is running.
+    if( strcmp(meta.execStatus,"r") == 0){
+        __pid_t return_pid = waitpid(meta.processID, &processStatus, WNOHANG); // Only checks status of pid
+        if( return_pid == -1) {
+            perror("error in getting process");
+            return "e";
+        } else if ( return_pid == 0) {   
+            return "r";
+        } else if ( return_pid == meta.processID) {
+            return "f";
+        }
+    } else {
+        return meta.execStatus;
     }
 
 }
@@ -77,9 +83,9 @@ void childProcess(char * replParsedInput[]){
 }
 
 void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
-    int   chld_state;
     pid_t rc_pid;
     int execID;
+    char * status;
     printf("P:Child process pid is : %d \n", child_pid);
     
 
@@ -91,22 +97,22 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
             perror("wait");
             exit(EXIT_FAILURE);
         }
+        status  = "f";
         execID = rand()% 900+ 100;
     } else {
-        // rc_pid = waitpid( child_pid, &chld_state, WNOHANG);
-        // printf("wnohang:%d, %s\n",rc_pid, getStatus(child_pid));
-
-                // Assign same execution id to Async process
+        // Assign same execution id to Async process
         if (prevASync == NULL) {
             execID = rand()% 900+ 100;
+            prevASync = execID;
         } else {
             execID = prevASync;
         }
+        status  = "r";
     }
     struct processMetaData processMeta = {
         .processID = child_pid,
         .execId = execID,
-        .execStatus = getStatus(child_pid)
+        .execStatus = status
     };
         
     execHistory[execHistoryLength++] = processMeta;
@@ -126,7 +132,6 @@ __pid_t replExec(char * replParsedInput[], bool async) {
         exit(EXIT_FAILURE);
     }
 
-
     if (child_pid == 0) {
         // Child process working 
 
@@ -142,11 +147,12 @@ __pid_t replExec(char * replParsedInput[], bool async) {
 }
 
 
-void listExecHistory (){ 
+void listExecHistory (bool allFlag) { 
     printf("\nProcess history\n");
     for(int i =0; i< execHistoryLength; i++) {
-        execHistory[i].execStatus = getStatus( execHistory[i].processID);
-        printf("Command %d with PID %d and execID: %d status: %s\n", i, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
+        execHistory[i].execStatus = getStatus( execHistory[i]);
+        if( allFlag || strcmp(execHistory[i].execStatus, "f") != 0)
+            printf("Command %d with PID %d and execID: %d status: %s\n", i, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
     }
     printf("\n");
 }
@@ -189,12 +195,13 @@ void repl(void) {
                 exitREPL = true;
                 exit(0);
             } else if (strncmp(seperatedInput[0], REPL_LIST_JOBS, 7) == 0) {
-                listExecHistory();
+                listExecHistory(false);
             } else if (strncmp(seperatedInput[0], REPL_FOREGROUNG, 2) == 0) {
                 int wait_status;
+                printf("bringing process '%s' to forground", seperatedInput[1]);
                 __pid_t terminated_child_pid = waitpid( (__pid_t) * seperatedInput[1], &wait_status, 0);
                 if (terminated_child_pid == -1) {
-                    perror("wait");
+                    perror("foreground");
                     exit(EXIT_FAILURE);
                 }
             } else {
@@ -204,7 +211,7 @@ void repl(void) {
 
             // #Clean
 
-            listExecHistory();
+            listExecHistory(false);
             // flush the input buffer            
             // while(getchar() != '\n');
 
