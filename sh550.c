@@ -14,7 +14,7 @@
 #define REPL_ASYNC "&"
 #define REPL_EXIT "exit"
 #define REPL_LIST_JOBS "listjobs"
-#define REPL_FOREGROUNG "fg"
+#define REPL_FOREGROUND "fg"
 
 
 bool TESTING_MODE = true;
@@ -205,7 +205,7 @@ void repl(void) {
                 exit(0);
             } else if (strncmp(seperatedInput[0], REPL_LIST_JOBS, 7) == 0) {
                 listExecHistory(true);
-            } else if (strncmp(seperatedInput[0], REPL_FOREGROUNG, 2) == 0) {
+            } else if (strncmp(seperatedInput[0], REPL_FOREGROUND, 2) == 0) {
                 int wait_status;
                 int pid = atoi(seperatedInput[1]);
                 printf("bringing process '%d' to forground", pid);
