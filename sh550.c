@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define REPL_HISTORY_LIMIT 100
 
 #define REPL_INPUT_LIMIT 100
 #define REPL_MAX_TOKENS 15
@@ -24,10 +25,9 @@ struct processMetaData
    __pid_t processID;
    int execId;
    char * execStatus;
-   bool checked;
 };
 
-struct processMetaData execHistory[100];
+struct processMetaData execHistory[REPL_HISTORY_LIMIT];
 int execHistoryLength = 0;
 
 int prevASync = NULL;
@@ -154,9 +154,18 @@ void listExecHistory (bool allFlag) {
         if( allFlag || strcmp(execHistory[i].execStatus, "f") != 0)
             printf("Command %d with PID %d and execID: %d status: %s\n", i, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
     }
-    printf("\n");
+    printf("Process history complete\n");
 }
 
+int searchHistoryByPid( __pid_t pid) {
+    int result = -1;
+    for(int i =0; i< execHistoryLength; i++) {
+        if( pid == execHistory[i].processID) {
+            result = i;
+        }
+    }
+    return result;
+}
 
 
 /*
@@ -195,15 +204,23 @@ void repl(void) {
                 exitREPL = true;
                 exit(0);
             } else if (strncmp(seperatedInput[0], REPL_LIST_JOBS, 7) == 0) {
-                listExecHistory(false);
+                listExecHistory(true);
             } else if (strncmp(seperatedInput[0], REPL_FOREGROUNG, 2) == 0) {
                 int wait_status;
-                printf("bringing process '%s' to forground", seperatedInput[1]);
-                __pid_t terminated_child_pid = waitpid( (__pid_t) * seperatedInput[1], &wait_status, 0);
+                int pid = atoi(seperatedInput[1]);
+                printf("bringing process '%d' to forground", pid);
+                __pid_t terminated_child_pid = waitpid( (__pid_t) pid, &wait_status, 0);
                 if (terminated_child_pid == -1) {
                     perror("foreground");
                     exit(EXIT_FAILURE);
                 }
+
+                // Update history
+                int metaDataIndex = searchHistoryByPid(pid);
+                if( metaDataIndex != -1) {
+                    execHistory[metaDataIndex].execStatus = "f";
+                }
+
             } else {
                 // #Execute
                 replExec(seperatedInput, async);
@@ -211,7 +228,7 @@ void repl(void) {
 
             // #Clean
 
-            listExecHistory(false);
+            listExecHistory(true);
             // flush the input buffer            
             // while(getchar() != '\n');
 
@@ -232,3 +249,4 @@ int main(void) {
 
 // sh test.sh 5 1 &
 // sh test.sh 5 2 &
+// sh test.sh 10 2 &
