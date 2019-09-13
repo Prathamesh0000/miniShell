@@ -30,7 +30,7 @@ struct processMetaData
 struct processMetaData execHistory[REPL_HISTORY_LIMIT];
 int execHistoryLength = 0;
 
-int prevASync = NULL;
+int prevASync = -1;
 
 
 
@@ -99,9 +99,10 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
         }
         status  = "f";
         execID = rand()% 900+ 100;
+        prevASync = -1;
     } else {
         // Assign same execution id to Async process
-        if (prevASync == NULL) {
+        if (prevASync < 0) {
             execID = rand()% 900+ 100;
             prevASync = execID;
         } else {
