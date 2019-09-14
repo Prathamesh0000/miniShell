@@ -222,7 +222,7 @@ void repl(void) {
             } else if (strncmp(seperatedInput[0], REPL_FOREGROUND, 2) == 0) {
                 int wait_status;
                 int pid = atoi(seperatedInput[1]);
-                printf("Bringing process '%d' to forground", pid);
+                printf("Bringing process '%d' to forground\n", pid);
                 __pid_t terminated_child_pid = waitpid( (__pid_t) pid, &wait_status, 0);
                 if (terminated_child_pid == -1) {
                     perror("foreground");
