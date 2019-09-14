@@ -94,11 +94,12 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
         // printf("P:Async turned OFF waiting for child\n");
         int wait_status;
         __pid_t terminated_child_pid = waitpid( child_pid, &wait_status, 0);
+        status  = "FINISHED";
         if (terminated_child_pid == -1) {
+            status  = "Error";
             perror("wait");
             exit(EXIT_FAILURE);
         }
-        status  = "FINISHED";
         execID = rand()% 900+ 100;
         prevASync = -1;
     } else {
