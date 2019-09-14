@@ -74,7 +74,7 @@ char * getStatus(struct processMetaData meta) {
 
 void childProcess(char * replParsedInput[]){
         // Use execv
-        printf("C:Child working\n");
+        // printf("C:Child working\n");
 
         int exec_return_value = execvp(replParsedInput[0], replParsedInput);
         if (exec_return_value == -1) {
@@ -87,11 +87,11 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
     pid_t rc_pid;
     int execID;
     char * status;
-    printf("P:Child process pid is : %d \n", child_pid);
+    // printf("P:Child process pid is : %d \n", child_pid);
     
 
     if (!async) {
-        printf("P:Async turned OFF waiting for child\n");
+        // printf("P:Async turned OFF waiting for child\n");
         int wait_status;
         __pid_t terminated_child_pid = waitpid( child_pid, &wait_status, 0);
         if (terminated_child_pid == -1) {
@@ -115,7 +115,6 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
     char commandStringCopy[REPL_INPUT_LIMIT] = "";
 
     for(int j = 0; j < REPL_INPUT_LIMIT && replParsedInput[j] != NULL; j++) {
-        printf("%s",  replParsedInput[j]);
         strcat(commandStringCopy, replParsedInput[j]);
         strcat(commandStringCopy, " ");
     }
@@ -142,7 +141,7 @@ __pid_t replExec(char * replParsedInput[], bool async) {
 
     if (child_pid == -1) {
         // Error in creating the fork
-        perror("P:Error in forking the process\n");
+        // perror("P:Error in forking the process\n");
         exit(EXIT_FAILURE);
     }
 
@@ -170,7 +169,7 @@ void listExecHistory (bool allFlag) {
             printf("Command '%s' with PID %d and execID: %d status: %s\n",execHistory[i].command, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
         }
     }
-    printf("Process history complete\n");
+    // printf("Process history complete\n");
 }
 
 int searchHistoryByPid( __pid_t pid) {
@@ -208,7 +207,7 @@ void repl(void) {
             if (strncmp(seperatedInput[inputTokenLength - 1], REPL_ASYNC, 1) == 0) {
                 async = true;
                 seperatedInput[inputTokenLength - 1] = NULL;
-                printf("Async Mode On \n");
+                // printf("Async Mode On \n");
             }
 
             // Check special command
@@ -222,7 +221,7 @@ void repl(void) {
             } else if (strncmp(seperatedInput[0], REPL_FOREGROUND, 2) == 0) {
                 int wait_status;
                 int pid = atoi(seperatedInput[1]);
-                printf("bringing process '%d' to forground", pid);
+                printf("Bringing process '%d' to forground", pid);
                 __pid_t terminated_child_pid = waitpid( (__pid_t) pid, &wait_status, 0);
                 if (terminated_child_pid == -1) {
                     perror("foreground");
@@ -242,7 +241,7 @@ void repl(void) {
 
             // #Clean
 
-            listExecHistory(true);
+            // listExecHistory(true);
             // flush the input buffer            
             // while(getchar() != '\n');
 
