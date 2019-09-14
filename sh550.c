@@ -23,6 +23,7 @@ bool TESTING_MODE = true;
 struct processMetaData
 {
    __pid_t processID;
+   char command[REPL_INPUT_LIMIT];
    int execId;
    char * execStatus;
 };
@@ -55,15 +56,15 @@ int parseInput(char replInput[], char * arrayToPut[], char delimiter[]) {
 char * getStatus(struct processMetaData meta) {
     int processStatus;
     // in finished state waitpid will return error as there will be no process in execution. Thus only check when process is running.
-    if( strcmp(meta.execStatus,"r") == 0){
+    if( strcmp(meta.execStatus,"RUNNING") == 0){
         __pid_t return_pid = waitpid(meta.processID, &processStatus, WNOHANG); // Only checks status of pid
         if( return_pid == -1) {
             perror("error in getting process");
-            return "e";
+            return "ERROR";
         } else if ( return_pid == 0) {   
-            return "r";
+            return "RUNNING";
         } else if ( return_pid == meta.processID) {
-            return "f";
+            return "FINISHED";
         }
     } else {
         return meta.execStatus;
@@ -97,7 +98,7 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
             perror("wait");
             exit(EXIT_FAILURE);
         }
-        status  = "f";
+        status  = "FINISHED";
         execID = rand()% 900+ 100;
         prevASync = -1;
     } else {
@@ -108,14 +109,26 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
         } else {
             execID = prevASync;
         }
-        status  = "r";
+        status  = "RUNNING";
     }
+
+    char commandStringCopy[REPL_INPUT_LIMIT] = "";
+
+    for(int j = 0; j < REPL_INPUT_LIMIT && replParsedInput[j] != NULL; j++) {
+        printf("%s",  replParsedInput[j]);
+        strcat(commandStringCopy, replParsedInput[j]);
+        strcat(commandStringCopy, " ");
+    }
+
     struct processMetaData processMeta = {
         .processID = child_pid,
         .execId = execID,
         .execStatus = status
     };
-        
+    
+    // copy the data and not the pointer
+    strcpy(processMeta.command, commandStringCopy);
+
     execHistory[execHistoryLength++] = processMeta;
 
 }
@@ -152,8 +165,10 @@ void listExecHistory (bool allFlag) {
     printf("\nProcess history\n");
     for(int i =0; i< execHistoryLength; i++) {
         execHistory[i].execStatus = getStatus( execHistory[i]);
-        if( allFlag || strcmp(execHistory[i].execStatus, "f") != 0)
-            printf("Command %d with PID %d and execID: %d status: %s\n", i, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
+        if( allFlag || strcmp(execHistory[i].execStatus, "FINISHED") != 0) {
+            
+            printf("Command '%s' with PID %d and execID: %d status: %s\n",execHistory[i].command, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
+        }
     }
     printf("Process history complete\n");
 }
@@ -187,9 +202,7 @@ void repl(void) {
         if (strcmp(replInput, "\n")) {
 
             // Parse Input
-            char * seperatedInput[REPL_MAX_TOKENS] = {
-                NULL
-            };
+            char * seperatedInput[REPL_MAX_TOKENS] = { NULL };
             int inputTokenLength = parseInput(replInput, seperatedInput, " \n");
 
             if (strncmp(seperatedInput[inputTokenLength - 1], REPL_ASYNC, 1) == 0) {
@@ -219,7 +232,7 @@ void repl(void) {
                 // Update history
                 int metaDataIndex = searchHistoryByPid(pid);
                 if( metaDataIndex != -1) {
-                    execHistory[metaDataIndex].execStatus = "f";
+                    execHistory[metaDataIndex].execStatus = "FINISHED";
                 }
 
             } else {
