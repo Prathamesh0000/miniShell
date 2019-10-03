@@ -1,6 +1,7 @@
 # Prerequisites
 *.d
-
+sh550
+.vscode
 # Object files
 *.o
 *.ko
