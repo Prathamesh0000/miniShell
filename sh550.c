@@ -332,15 +332,15 @@ void repl(void) {
 
             // Check special command
 
-            if (strncmp(seperatedInput[0], REPL_EXIT, 4) == 0) {
+            if (strncmp(seperatedInput[0], REPL_EXIT, 4) == 0) { // "exit" Command
                 printf("Exiting the REPL! \n");
                 exitREPL = true;
                 exit(0);
-            } else if (strncmp(seperatedInput[0], REPL_KILL, 3) == 0) {
+            } else if (strncmp(seperatedInput[0], REPL_KILL, 3) == 0) {             // "kill" command
                 killProcess((__pid_t)atoi(seperatedInput[1]));
-            } else if (strncmp(seperatedInput[0], REPL_LIST_JOBS, 7) == 0) {
-                listExecHistory(true);
-            } else if (strncmp(seperatedInput[0], REPL_FOREGROUND, 2) == 0) {
+            } else if (strncmp(seperatedInput[0], REPL_LIST_JOBS, 7) == 0) {        // prints history of executed process
+                listExecHistory(true);                                              // False argument will return process that are running and not all
+            } else if (strncmp(seperatedInput[0], REPL_FOREGROUND, 2) == 0) {       //"fg" command brings background process to foreground i.e parent waits for ${pid} childs exeuction
                 int wait_status;
                 int pid = atoi(seperatedInput[1]);
                 printf("Bringing process '%d' to forground\n", pid);
@@ -356,7 +356,7 @@ void repl(void) {
                     execHistory[metaDataIndex].execStatus = "FINISHED";
                 }
 
-            } else if ( replIOLength > 1) {
+            } else if ( replIOLength > 1) {                                         // If there exist any defined special characters like "|" , ">" ,"<"
                 // USed as Input
                 int prevDescriptor[2];
                 pipe(prevDescriptor);
@@ -468,8 +468,8 @@ void repl(void) {
             // while(getchar() != '\n');
 
         }
-        if(signal_ctrl_c) {
-            signal_ctrl_c = false;
+        if(signal_ctrl_c) { 
+            signal_ctrl_c = false;                                 // reset signal variable and continue the REPL.
         }
 
     }
@@ -486,7 +486,3 @@ int main(void) {
     repl();
     return 0;
 }
-
-// sh test.sh 5 1 &
-// sh test.sh 5 2 &
-// sh test.sh 10 2 &
