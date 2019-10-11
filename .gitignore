@@ -2,6 +2,7 @@
 *.d
 sh550
 .vscode
+.txt
 # Object files
 *.o
 *.ko

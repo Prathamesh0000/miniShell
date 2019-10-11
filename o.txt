@@ -1,0 +1,11 @@
+drwxrwxr-x 5 prathamesh prathamesh  4096 Oct 11 13:23 .
+drwxrwxr-x 5 prathamesh prathamesh  4096 Oct 11 13:03 ..
+drwxrwxr-x 2 prathamesh prathamesh  4096 Sep  9 21:02 coverage
+drwxrwxr-x 8 prathamesh prathamesh  4096 Oct  2 22:29 .git
+-rw-rw-r-- 1 prathamesh prathamesh   443 Oct  2 22:26 .gitignore
+-rw-r--r-- 1 prathamesh prathamesh   210 Oct  7 18:01 Makefile
+-rw-rw-r-- 1 prathamesh prathamesh     0 Oct 11 13:24 o.txt
+-rwxrwxr-x 1 prathamesh prathamesh 30224 Oct 11 13:23 sh550
+-rw-rw-r-- 1 prathamesh prathamesh 16056 Oct 11 13:22 sh550.c
+-rw-r--r-- 1 prathamesh prathamesh 22093 Oct  7 17:59 valgrind-out.txt
+drwxrwxr-x 2 prathamesh prathamesh  4096 Sep  8 13:26 .vscode
