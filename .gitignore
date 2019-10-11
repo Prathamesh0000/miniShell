@@ -1,6 +1,5 @@
 # Prerequisites
 *.d
-sh550
 .vscode
 .txt
 # Object files

@@ -34,8 +34,6 @@
 #define REPL_STDIN 0
 #define REPL_STDOUT 1
 
-// Handle ctrl-c 
-static volatile bool exitREPL = false;
 
 
 
@@ -57,7 +55,9 @@ int execHistoryLength = 0;
 
 int prevASync = -1;
 
-
+int genExecId() {
+    return  rand()% 900+ 100;
+}
 /*
     function takes char and Delimiter as input and returns a array of splitted char's
 */
@@ -143,9 +143,9 @@ void childProcess(char * replParsedInput[], int *inputDescriptor, int inputDescr
     // printf("child stdout check\n");
     // fflush(stdout);
 
-    for(int i = 0; i < 5; i++ ) {
-        fprintf(stderr, "child executing %s \n",replParsedInput[i] );
-    }
+    // for(int i = 0; i < 5; i++ ) {
+    //     fprintf(stderr, "child executing %s \n",replParsedInput[i] );
+    // }
     int exec_return_value = execvp(replParsedInput[0], replParsedInput);
     if (exec_return_value == -1) {
         perror("Error is executing command");
@@ -156,7 +156,7 @@ void childProcess(char * replParsedInput[], int *inputDescriptor, int inputDescr
 void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
     pid_t rc_pid;
     int execID;
-    char * status;
+    char * status = "RUNNING";
     // printf("P:Child process pid is : %d \n", child_pid);
     
 
@@ -164,11 +164,12 @@ void parentProcess(char * replParsedInput[], __pid_t child_pid, bool async) {
         // printf("P:Async turned OFF waiting for child\n");
         int wait_status;
         __pid_t terminated_child_pid = waitpid( child_pid, &wait_status, 0);
-        status  = "FINISHED";
         if (terminated_child_pid == -1) {
             status  = "Error";
             perror("wait");
             exit(EXIT_FAILURE);
+        } else {
+            status  = "FINISHED";
         }
         execID = rand()% 900+ 100;
         prevASync = -1;
@@ -292,28 +293,30 @@ int checkIO( char ** inputArr, int length, int ** replInputIOOutputBuff) {
 void killProcess(__pid_t pid) {
     kill(pid, SIGKILL);
 }
+static volatile bool signal_ctrl_c = false;
 void intHandler(int dummy) {
-    exitREPL = false;
-    listExecHistory(false); // No need to kill anything as ctrl-c signal will be handled in parent but in child after exec the process is replaced with new one thus killing it as there is no sig handler
+    printf("handler called");
+    fflush(stdout);
+    signal_ctrl_c = true;
 }
 /*
     Executes Read–eval–print loop
 */
 void repl(void) {
     // Exit variable
-    // bool exitREPL = false;
+    bool exitREPL = false;
     saved_stdout = dup(1);
     saved_stdin = dup(0);
     while (!exitREPL) {
         char text[] = "sh550 > ";
         char replInput[REPL_INPUT_LIMIT]= { '\0' } ;
         int * replInputIO[REPL_INPUT_LIMIT] = { NULL };
-        bool async = false;
         // #Get input
         printf("%s", text);
         fgets(replInput, REPL_INPUT_LIMIT, stdin);
 
         if (strcmp(replInput, "\n")) {
+        bool async = false;
 
             // Parse Input
             char * seperatedInput[REPL_MAX_TOKENS] = { NULL };
@@ -363,7 +366,7 @@ void repl(void) {
                     int nextDescriptor[2];
 
                 
-                for( int i = 0; i< replIOLength; i++) {
+                for( int i = 0; i< replIOLength && signal_ctrl_c == false; i++) {
                     // Used as Output
                     int nextDescriptorLength = 0;
                     char **tempReplEXec = (char**) malloc(REPL_INPUT_LIMIT * sizeof(char));
@@ -461,8 +464,12 @@ void repl(void) {
             // while(getchar() != '\n');
 
         }
+        if(signal_ctrl_c) {
+            signal_ctrl_c = false;
+        }
 
     }
+    printf("Exiting REPL!");
 }
 
 
