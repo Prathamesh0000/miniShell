@@ -35,7 +35,10 @@
 #define REPL_STDOUT 1
 
 
-
+/*
+    TODO: Make exec id for pipes and background processes same
+    TODO: Make different files for replExec, History and additional command execution
+*/
 
 bool TESTING_MODE = true;
 
@@ -369,12 +372,13 @@ void repl(void) {
                 for( int i = 0; i< replIOLength && signal_ctrl_c == false; i++) {
                     // Used as Output
                     int nextDescriptorLength = 0;
-                    char **tempReplEXec = (char**) malloc(REPL_INPUT_LIMIT * sizeof(char));
+                    char **tempReplExec = (char**) malloc(REPL_INPUT_LIMIT * sizeof(char));
                     int prevIndexWithIO = replInputIO[i][0];
                     int nextIndexWithIO = replInputIO[i][1];
                     for( int j = 0; j < nextIndexWithIO - prevIndexWithIO -1; j++) {
-                        tempReplEXec[j] = seperatedInput[j + prevIndexWithIO + 1]; 
+                        tempReplExec[j] = seperatedInput[j + prevIndexWithIO + 1]; 
                     }
+                    tempReplExec[nextIndexWithIO - prevIndexWithIO -1] = NULL;
                     nextDescriptorLength = 0;
 
                     /*
@@ -420,7 +424,7 @@ void repl(void) {
                         i++;
                     }
                              
-                    replExec(tempReplEXec, false, prevDescriptor, prevDescriptorLength, nextDescriptor, nextDescriptorLength);
+                    replExec(tempReplExec, false, prevDescriptor, prevDescriptorLength, nextDescriptor, nextDescriptorLength);
 
                     if ( dup2(nextDescriptor[0], prevDescriptor[0]) < 0)
                     {
@@ -430,7 +434,7 @@ void repl(void) {
                     }
                     close(nextDescriptor[1]); // closing write descriptor in parent as it is not required and race condition possible
                     prevDescriptorLength = nextDescriptorLength;
-                    free(tempReplEXec);
+                    free(tempReplExec);
                 }
                 // ls -la | grep c > o.txt | less
                 // close unused pipes
