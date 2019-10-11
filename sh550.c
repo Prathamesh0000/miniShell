@@ -238,7 +238,7 @@ void listExecHistory (bool allFlag) {
         execHistory[i].execStatus = getStatus( execHistory[i]);
         if( allFlag || strcmp(execHistory[i].execStatus, "FINISHED") != 0) {
             
-            printf("Command '%s' with PID %d and execID: %d status: %s\n",execHistory[i].command, execHistory[i].processID, execHistory[i].execId, execHistory[i].execStatus);
+            printf("Command '%s' with PID %d and  status: %s\n",execHistory[i].command, execHistory[i].processID, execHistory[i].execStatus);
         }
     }
     // printf("Process history complete\n");
